@@ -1,0 +1,25 @@
+{
+  "name": "Hazsn - Keuangan & Target",
+  "short_name": "Hazsn",
+  "description": "Aplikasi sederhana untuk mengatur keuangan, tugas, dan target tabungan.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#120E2B",
+  "theme_color": "#5B3FFF",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
