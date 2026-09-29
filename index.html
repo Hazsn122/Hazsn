@@ -3,7 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Hazsn</title>
+<title>Tabungan Masa Depan</title>
+<link rel="manifest" href="./manifest.json">
+<meta name="theme-color" content="#5B3FFF">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -90,15 +92,31 @@ input,select{background:var(--bg);border:1px solid var(--line);border-radius:14p
 .editing{border-color:var(--brand);box-shadow:0 0 0 2px color-mix(in srgb,var(--brand) 15%,transparent)}
 @media(max-width:560px){.stats-grid{grid-template-columns:1fr}.month-nav input{min-width:0}}
 
+
+.account-btn{display:flex;align-items:center;gap:7px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:9px 13px;font-weight:600;max-width:190px;overflow:hidden}.account-btn span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.account-btn:active{transform:scale(.98)}
+.account-overlay{position:fixed;inset:0;background:var(--bg);z-index:1000;display:grid;place-items:center;padding:20px}.account-box{width:min(460px,100%);background:var(--surface);border:1px solid var(--line);border-radius:28px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.18)}.account-brand{text-align:center;margin-bottom:18px}.account-brand .mark{margin:0 auto 10px}.account-brand h1{font-size:27px}.account-brand p{color:var(--muted);font-size:14px;margin-top:4px}.account-switch{display:flex;gap:5px;background:var(--bg);padding:4px;border-radius:14px;margin-bottom:14px}.account-switch button{flex:1;padding:9px;border-radius:10px;color:var(--muted);font-weight:600}.account-switch button.on{background:var(--brand);color:var(--brand-ink)}.account-box form{display:grid;gap:10px}.account-box label{font-size:13px;color:var(--muted);margin-top:2px}.account-box .primary{margin-top:4px}.account-msg{min-height:21px;color:var(--muted);font-size:13px;text-align:center}.account-note{margin-top:14px;padding:11px 13px;border-radius:14px;background:var(--bg);color:var(--muted);font-size:12px}.account-menu{position:fixed;right:16px;top:72px;z-index:900;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px;width:min(300px,calc(100vw - 32px));box-shadow:0 15px 40px rgba(0,0,0,.18);display:none}.account-menu.show{display:block}.account-menu h3{font-size:16px;margin-bottom:4px}.account-menu p{color:var(--muted);font-size:13px;margin-bottom:10px}.account-menu button{width:100%;padding:10px;border-radius:12px;background:var(--bg);text-align:left;margin-top:6px}.account-menu button.logout{color:var(--out)}
+@media(max-width:560px){.account-btn{padding:9px 11px}.account-btn span{max-width:90px}}
 </style>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#5B3FFF">
-<link rel="apple-touch-icon" href="icon-192.png">
 </head>
 <body>
+<div class="account-overlay" id="accountOverlay">
+  <div class="account-box">
+    <div class="account-brand"><div class="mark" aria-hidden="true">T</div><h1>Tabungan Masa Depan</h1><p>Keuangan keluarga, satu aplikasi.</p></div>
+    <div class="account-switch"><button id="loginTab" class="on" type="button">Masuk</button><button id="registerTab" type="button">Buat akun</button></div>
+    <form id="accountForm">
+      <label for="accUser">Nama akun</label><input id="accUser" autocomplete="username" placeholder="Contoh: Ayah, Ibu, Hasan">
+      <label for="accPin">PIN</label><input id="accPin" type="password" inputmode="numeric" autocomplete="current-password" minlength="4" maxlength="12" placeholder="Minimal 4 angka">
+      <button class="primary" id="accountSubmit" type="submit">Masuk</button>
+      <div class="account-msg" id="accountMsg" aria-live="polite"></div>
+    </form>
+    <div class="account-note">Versi ini memakai akun lokal di perangkat/browser. Data belum tersinkron antar-HP dan PIN bukan sistem keamanan tingkat tinggi. Nanti kita bisa upgrade ke login + database online.</div>
+  </div>
+</div>
+<div class="account-menu" id="accountMenu"><h3 id="menuName">Akun</h3><p>Data transaksi, tugas, dan target akun ini dipisahkan dari akun keluarga lainnya.</p><button id="switchAccount">Ganti akun</button><button id="logoutBtn" class="logout">Keluar</button></div>
 <div class="wrap">
   <header>
-    <div class="logo"><div class="mark" aria-hidden="true">H</div>Hazsn</div>
+    <div class="logo"><div class="mark" aria-hidden="true">T</div>Tabungan Masa Depan</div>
+    <button class="account-btn" id="accountBtn" aria-label="Akun">👤 <span id="accountName">Akun</span></button>
     <button class="icon-btn" id="theme" aria-label="Ganti tema">◐</button>
   </header>
   <nav role="tablist" id="tabs">
@@ -233,15 +251,46 @@ const $=s=>document.querySelector(s);
 const CATS={out:[['Makan','🍜'],['Transport','🛵'],['Belanja','🛍️'],['Tagihan','💡'],['Hiburan','🎮'],['Tabungan','🎯'],['Lainnya','📦']],in:[['Gaji','💼'],['Bonus','🎁'],['Usaha','🏪'],['Lainnya','💰']]};
 const COL=['#8A5CFF','#FF6B88','#FFC552','#3DDBB0','#4DA3FF','#FF9A5C'];
 let S={tx:[],tasks:[],goals:[],budget:0,startBal:0},type='out',filter='all',editTxId=null;
-try{const d=localStorage.getItem('hazsn');if(d)S=JSON.parse(d)}catch(e){}
-S.goals=S.goals||[];S.budget=S.budget||0;S.startBal=Number(S.startBal)||0;
-const save=()=>{try{localStorage.setItem('hazsn',JSON.stringify(S))}catch(e){}};
+let currentUser=null, accountMode='login';
+const EMPTY=()=>({tx:[],tasks:[],goals:[],budget:0,startBal:0});
+const loadAccounts=()=>{try{return JSON.parse(localStorage.getItem('tmf_accounts')||'{}')}catch(e){return {}}};
+const saveAccounts=a=>{try{localStorage.setItem('tmf_accounts',JSON.stringify(a))}catch(e){}};
+const normalizeData=d=>{d=d||EMPTY();d.tx=Array.isArray(d.tx)?d.tx:[];d.tasks=Array.isArray(d.tasks)?d.tasks:[];d.goals=Array.isArray(d.goals)?d.goals:[];d.budget=Number(d.budget)||0;d.startBal=Number(d.startBal)||0;return d};
+function migrateOldData(){
+  const a=loadAccounts(); if(Object.keys(a).length)return a;
+  try{const old=localStorage.getItem('hazsn');if(old){const d=normalizeData(JSON.parse(old));a['utama']={name:'Utama',pin:'1234',data:d};saveAccounts(a);return a}}catch(e){}
+  return a;
+}
+let ACC=migrateOldData();
+const save=()=>{if(!currentUser)return;ACC[currentUser].data=normalizeData(S);saveAccounts(ACC)};
 const rp=n=>(n<0?'-':'')+'Rp'+Math.abs(n).toLocaleString('id-ID');
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const today=()=>new Date().toISOString().slice(0,10);
 const fmt=d=>d?new Date(d+'T00:00').toLocaleDateString('id-ID',{day:'numeric',month:'short',year:'numeric'}):'';
 const icon=(t,c)=>(CATS[t].find(x=>x[0]===c)||['','📦'])[1];
 
+function showAccountOverlay(mode='login'){
+  accountMode=mode;$('#accountOverlay').style.display='grid';$('#loginTab').classList.toggle('on',mode==='login');$('#registerTab').classList.toggle('on',mode==='register');$('#accountSubmit').textContent=mode==='login'?'Masuk':'Buat akun';$('#accPin').value='';$('#accountMsg').textContent='';
+}
+function enterAccount(key){currentUser=key;S=normalizeData(ACC[key].data);$('#accountOverlay').style.display='none';$('#accountName').textContent=ACC[key].name;$('#menuName').textContent=ACC[key].name;fillCats();render();}
+function logout(){save();currentUser=null;$('#accountMenu').classList.remove('show');showAccountOverlay('login');}
+$('#loginTab').onclick=()=>showAccountOverlay('login');
+$('#registerTab').onclick=()=>showAccountOverlay('register');
+$('#accountForm').onsubmit=e=>{
+  e.preventDefault(); const name=$('#accUser').value.trim(); const pin=$('#accPin').value.trim(); const key=name.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
+  if(name.length<2){$('#accountMsg').textContent='Nama akun minimal 2 karakter.';return}
+  if(!/^\d{4,12}$/.test(pin)){ $('#accountMsg').textContent='PIN harus 4–12 angka.';return}
+  if(accountMode==='register'){
+    if(ACC[key]){$('#accountMsg').textContent='Nama akun itu sudah ada. Coba nama lain.';return}
+    ACC[key]={name,pin,data:EMPTY()};saveAccounts(ACC);enterAccount(key);return;
+  }
+  const found=ACC[key];
+  if(!found||found.pin!==pin){$('#accountMsg').textContent='Nama akun atau PIN salah.';return}
+  enterAccount(key);
+};
+$('#accountBtn').onclick=()=>$('#accountMenu').classList.toggle('show');
+$('#switchAccount').onclick=()=>{save();$('#accountMenu').classList.remove('show');showAccountOverlay('login');};
+$('#logoutBtn').onclick=logout;
 // tabs
 document.querySelectorAll('#tabs button').forEach(b=>b.onclick=()=>{
   document.querySelectorAll('#tabs button').forEach(x=>x.setAttribute('aria-selected',x===b));
@@ -415,30 +464,22 @@ $('#gAdd').onclick=()=>{
 $('#bgIn').onchange=()=>{S.budget=Math.max(0,Math.round(+$('#bgIn').value)||0);save();render()};
 const msg=t=>$('#bkMsg').textContent=t;
 $('#bkMake').onclick=async()=>{
-  const j=JSON.stringify({app:'hazsn',v:2,...S});$('#bk').value=j;$('#bk').select();
+  const j=JSON.stringify({app:'tabungan-masa-depan',v:3,account:ACC[currentUser]?.name||'Akun',...S});$('#bk').value=j;$('#bk').select();
   try{await navigator.clipboard.writeText(j);msg('Cadangan sudah disalin. Simpan di tempat aman.')}catch(e){msg('Teks cadangan siap. Salin manual dari kotak di atas.')}
 };
 $('#bkFile').onclick=()=>{
-  try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='hazsn-cadangan-'+today()+'.json';a.click();msg('Jika file tidak terunduh, pakai tombol Buat & salin.')}catch(e){msg('Unduh tidak tersedia di sini. Pakai tombol Buat & salin.')}
+  try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(S)],{type:'application/json'}));a.download='tabungan-masa-depan-cadangan-'+today()+'.json';a.click();msg('Jika file tidak terunduh, pakai tombol Buat & salin.')}catch(e){msg('Unduh tidak tersedia di sini. Pakai tombol Buat & salin.')}
 };
 $('#bkRestore').onclick=()=>{
   try{
     const d=JSON.parse($('#bk').value);
     if(!Array.isArray(d.tx)||!Array.isArray(d.tasks))throw 0;
     if(!confirm('Data saat ini akan diganti dengan cadangan. Lanjutkan?'))return;
-    S={tx:d.tx,tasks:d.tasks,goals:d.goals||[],budget:d.budget||0,startBal:Number(d.startBal)||0};save();render();msg('Data berhasil dipulihkan.');
+    S={tx:d.tx,tasks:d.tasks,goals:d.goals||[],budget:d.budget||0,startBal:Number(d.startBal)||0};save();render();msg('Data berhasil dipulihkan ke akun '+esc(ACC[currentUser].name)+'.');
   }catch(e){msg('Teks cadangan tidak valid. Pastikan seluruh teks tertempel.')}
 };
-fillCats();render();
+if(Object.keys(ACC).length===0){showAccountOverlay('register')}else{showAccountOverlay('login')}
 </script>
-
-<script>
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(err => console.log('Hazsn PWA:', err));
-  });
-}
-</script>
-
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("./sw.js").catch(()=>{});}</script>
 </body>
 </html>
