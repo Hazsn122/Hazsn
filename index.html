@@ -104,12 +104,12 @@ input,select{background:var(--bg);border:1px solid var(--line);border-radius:14p
     <div class="account-brand"><div class="mark" aria-hidden="true">T</div><h1>Tabungan Masa Depan</h1><p>Keuangan keluarga, satu aplikasi.</p></div>
     <div class="account-switch"><button id="loginTab" class="on" type="button">Masuk</button><button id="registerTab" type="button">Buat akun</button></div>
     <form id="accountForm">
-      <label for="accUser">Nama akun</label><input id="accUser" autocomplete="username" placeholder="Contoh: Ayah, Ibu, Hasan">
-      <label for="accPin">PIN</label><input id="accPin" type="password" inputmode="numeric" autocomplete="current-password" minlength="4" maxlength="12" placeholder="Minimal 4 angka">
+      <label for="accUser">Username</label><input id="accUser" autocomplete="username" placeholder="Masukkan username">
+      <label for="accPin">Password</label><input id="accPin" type="password" autocomplete="current-password" placeholder="Masukkan password">
       <button class="primary" id="accountSubmit" type="submit">Masuk</button>
       <div class="account-msg" id="accountMsg" aria-live="polite"></div>
     </form>
-    <div class="account-note">Versi ini memakai akun lokal di perangkat/browser. Data belum tersinkron antar-HP dan PIN bukan sistem keamanan tingkat tinggi. Nanti kita bisa upgrade ke login + database online.</div>
+    <div class="account-note">💙 Pelan-pelan nggak apa-apa. Sedikit demi sedikit, tabungan hari ini bisa jadi langkah besar untuk masa depanmu.</div>
   </div>
 </div>
 <div class="account-menu" id="accountMenu"><h3 id="menuName">Akun</h3><p>Data transaksi, tugas, dan target akun ini dipisahkan dari akun keluarga lainnya.</p><button id="switchAccount">Ganti akun</button><button id="logoutBtn" class="logout">Keluar</button></div>
@@ -279,7 +279,7 @@ $('#registerTab').onclick=()=>showAccountOverlay('register');
 $('#accountForm').onsubmit=e=>{
   e.preventDefault(); const name=$('#accUser').value.trim(); const pin=$('#accPin').value.trim(); const key=name.toLowerCase().replace(/[^a-z0-9]+/g,'_').replace(/^_|_$/g,'');
   if(name.length<2){$('#accountMsg').textContent='Nama akun minimal 2 karakter.';return}
-  if(!/^\d{4,12}$/.test(pin)){ $('#accountMsg').textContent='PIN harus 4–12 angka.';return}
+  if(!pin){ $('#accountMsg').textContent='Password belum diisi.';return}
   if(accountMode==='register'){
     if(ACC[key]){$('#accountMsg').textContent='Nama akun itu sudah ada. Coba nama lain.';return}
     ACC[key]={name,pin,data:EMPTY()};saveAccounts(ACC);enterAccount(key);return;
